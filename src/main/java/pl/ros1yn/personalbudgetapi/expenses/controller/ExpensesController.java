@@ -13,7 +13,7 @@ import pl.ros1yn.personalbudgetapi.expenses.service.ExpensesPatchService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/exenses")
+@RequestMapping("/expenses")
 @AllArgsConstructor
 @Slf4j
 class ExpensesController {

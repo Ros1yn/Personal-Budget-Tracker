@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import pl.ros1yn.personalbudgetapi.expenses.dto.ExpensesRequest;
 import pl.ros1yn.personalbudgetapi.expenses.dto.ExpensesResponse;
+import pl.ros1yn.personalbudgetapi.expenses.mapper.ExpensesMapper;
 import pl.ros1yn.personalbudgetapi.expenses.model.Expenses;
 import pl.ros1yn.personalbudgetapi.utils.ClassFinder;
 
@@ -18,7 +19,6 @@ public class ExpensesPatchService {
 
     private ClassFinder classFinder;
 
-
     public ResponseEntity<ExpensesResponse> patchExpenses(Integer expensesId, ExpensesRequest expensesRequest) {
 
         Expenses existingExpenses = classFinder.findExpenses(expensesId);
@@ -26,8 +26,15 @@ public class ExpensesPatchService {
         Optional.of(expensesRequest.getAmount())
                 .ifPresent(existingExpenses::setAmount);
 
-        //TODO dokończyć metodę
+        Optional.of(expensesRequest.getDescription())
+                .ifPresent(existingExpenses::setDescription);
 
-        return null;
+        Optional.of(expensesRequest.getExpenseDate())
+                .ifPresent(existingExpenses::setExpenseDate);
+
+        Optional.of(expensesRequest.getCategoryId())
+                .ifPresent(expensesRequest::setCategoryId);
+
+        return ResponseEntity.ok(ExpensesMapper.mapToResponse(existingExpenses));
     }
 }
