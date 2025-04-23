@@ -5,7 +5,6 @@ import org.springframework.stereotype.Component;
 import pl.ros1yn.personalbudgetapi.expenses.model.Expenses;
 
 import java.time.YearMonth;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,22 +25,19 @@ public class MonthlyAveragePerCategoryHelper {
                 ));
     }
 
-    public List<Map<String, Map<String, String>>> formatAndExportCategoryAverages(Map<String, Map<YearMonth, List<Double>>> expansesPerCategory) {
+    public Map<String, Map<String, String>> formatAndExportCategoryAverages(
+            Map<String, Map<YearMonth, List<Double>>> expansesPerCategory) {
 
-        List<Map<String, Map<String, String>>> result = new ArrayList<>();
+        Map<String, Map<String, String>> result = new HashMap<>();
 
         expansesPerCategory.forEach((categoryName, monthlyData) -> {
-
-            Map<String, Map<String, String>> categoryEntry = new HashMap<>();
-
             Map<String, String> monthAverageMap = calculateAverages(monthlyData);
-            categoryEntry.put(categoryName, monthAverageMap);
-
-            result.add(categoryEntry);
+            result.put(categoryName, monthAverageMap);
         });
 
         return result;
     }
+
 
     private Map<String, String> calculateAverages(Map<YearMonth, List<Double>> monthlyData) {
 
