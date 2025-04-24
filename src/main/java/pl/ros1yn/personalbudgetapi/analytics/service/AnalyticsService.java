@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import pl.ros1yn.personalbudgetapi.analytics.response.ExpensesOfTheMonth;
+import pl.ros1yn.personalbudgetapi.analytics.response.TotalMonthlySpending;
 import pl.ros1yn.personalbudgetapi.analytics.utils.MinMaxInTheMonthHelper;
 import pl.ros1yn.personalbudgetapi.analytics.utils.MonthlyAveragePerCategoryHelper;
 import pl.ros1yn.personalbudgetapi.expenses.model.Expenses;
@@ -63,8 +64,6 @@ public class AnalyticsService {
 
     public ResponseEntity<ExpensesOfTheMonth> getMonthlySpendingsInCategory(String categoryName, YearMonth dateOfSpending) {
 
-
-
         List<Expenses> expenses = expensesRepository.findAll().stream()
                 .filter(exp -> exp.getCategory()
                         .getCategoryName().equalsIgnoreCase(categoryName))
@@ -81,6 +80,22 @@ public class AnalyticsService {
         ExpensesOfTheMonth result = ExpensesOfTheMonth.builder()
                 .category(categoryName)
                 .expenses(filteredExpenses)
+                .build();
+
+        return ResponseEntity.ok(result);
+    }
+
+    public ResponseEntity<TotalMonthlySpending> getTotalMonthlySpending(YearMonth dateOfSpending) {
+
+        double totalMonthlySpendings = expensesRepository.findAll().stream()
+                .filter(exp -> dateOfSpending.equals(YearMonth.from(exp.getExpenseDate())))
+                .map(Expenses::getAmount)
+                .mapToDouble(Double::doubleValue)
+                .sum();
+
+        TotalMonthlySpending result = TotalMonthlySpending.builder()
+                .spendingsDate(dateOfSpending)
+                .totalSpendings(String.format("%.2f", totalMonthlySpendings))
                 .build();
 
         return ResponseEntity.ok(result);

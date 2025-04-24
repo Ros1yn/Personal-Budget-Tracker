@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import pl.ros1yn.personalbudgetapi.analytics.response.ExpensesOfTheMonth;
+import pl.ros1yn.personalbudgetapi.analytics.response.TotalMonthlySpending;
 import pl.ros1yn.personalbudgetapi.analytics.service.AnalyticsService;
 
 import java.time.YearMonth;
@@ -43,7 +44,6 @@ public class AnalyticsController {
         return analyticsService.getMaxSpendingInTheMonth(dateOfSpending);
     }
 
-    //TODO zamiana z mapy na obiekt
     @GetMapping("/expensesOfTheMonth/{categoryName}/{dateOfSpending}")
     public ResponseEntity<ExpensesOfTheMonth> getExpensesOfTheMonth(
             @PathVariable String categoryName,
@@ -52,4 +52,14 @@ public class AnalyticsController {
         log.info("Recived request for getMaxSpendingInTheMonth with category name: {} | and date: {}", categoryName, dateOfSpending);
         return analyticsService.getMonthlySpendingsInCategory(categoryName, dateOfSpending);
     }
+
+    @GetMapping("/totalMonthlySpending/{dateOfSpending}")
+    public ResponseEntity<TotalMonthlySpending> getTotalMonthlySpending(
+            @PathVariable @DateTimeFormat(pattern = "yyyy-MM") YearMonth dateOfSpending) {
+
+        log.info("Recived request for getTotalMonthlySpending with date: {}.", dateOfSpending);
+        return analyticsService.getTotalMonthlySpending(dateOfSpending);
+    }
+
+
 }
