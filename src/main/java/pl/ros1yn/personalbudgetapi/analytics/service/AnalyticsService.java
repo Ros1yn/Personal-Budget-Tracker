@@ -3,13 +3,16 @@ package pl.ros1yn.personalbudgetapi.analytics.service;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import pl.ros1yn.personalbudgetapi.analytics.response.DailySpendingsResponse;
 import pl.ros1yn.personalbudgetapi.analytics.response.ExpensesOfTheMonth;
+import pl.ros1yn.personalbudgetapi.analytics.response.MaxAndMinSpendingInTheMonthResponse;
 import pl.ros1yn.personalbudgetapi.analytics.response.TotalMonthlySpending;
 import pl.ros1yn.personalbudgetapi.analytics.utils.MinMaxInTheMonthHelper;
 import pl.ros1yn.personalbudgetapi.analytics.utils.MonthlyAveragePerCategoryHelper;
 import pl.ros1yn.personalbudgetapi.expenses.model.Expenses;
 import pl.ros1yn.personalbudgetapi.expenses.repository.ExpensesRepository;
 
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.HashMap;
 import java.util.List;
@@ -39,24 +42,28 @@ public class AnalyticsService {
     }
 
 
-    public ResponseEntity<Map<String, String>> getMinSpendingInTheMonth(YearMonth dateOfSpending) {
+    public ResponseEntity<MaxAndMinSpendingInTheMonthResponse> getMinSpendingInTheMonth(YearMonth dateOfSpending) {
 
         double minSpendingAmount = minMaxInTheMonthHelper.getMinSpendingAmount(dateOfSpending);
 
-        HashMap<String, String> result = new HashMap<>();
-        result.put("minSpendingAmount", String.format("%.2f", minSpendingAmount));
+        MaxAndMinSpendingInTheMonthResponse result = MaxAndMinSpendingInTheMonthResponse.builder()
+                .spendingAmount("minSpendingAmount")
+                .formattedAmount(String.format("%.2f", minSpendingAmount))
+                .build();
 
         return ResponseEntity.ok(result);
     }
 
 
 
-    public ResponseEntity<Map<String, String>> getMaxSpendingInTheMonth(YearMonth dateOfSpending) {
+    public ResponseEntity<MaxAndMinSpendingInTheMonthResponse> getMaxSpendingInTheMonth(YearMonth dateOfSpending) {
 
         double minSpendingAmount = minMaxInTheMonthHelper.getMaxSpendingAmount(dateOfSpending);
 
-        HashMap<String, String> result = new HashMap<>();
-        result.put("maxSpendingAmount", String.format("%.2f", minSpendingAmount));
+        MaxAndMinSpendingInTheMonthResponse result = MaxAndMinSpendingInTheMonthResponse.builder()
+                .spendingAmount("maxSpendingAmount")
+                .formattedAmount(String.format("%.2f", minSpendingAmount))
+                .build();
 
         return ResponseEntity.ok(result);
     }
@@ -99,5 +106,27 @@ public class AnalyticsService {
                 .build();
 
         return ResponseEntity.ok(result);
+    }
+
+    public ResponseEntity<List<DailySpendingsResponse>> getDailySpendings(LocalDate spendingaDate) {
+
+        List<DailySpendingsResponse> dailySpendings = expensesRepository.findAll().stream()
+                .filter(exp -> exp.getExpenseDate().isEqual(spendingaDate))
+                .map(exp -> {
+
+                    HashMap<String, String> dateAndSpendings = new HashMap<>();
+
+                    dateAndSpendings.put(
+                            exp.getExpenseDate().toString(),
+                            String.format("%.2f", exp.getAmount())
+                    );
+
+                    return DailySpendingsResponse.builder()
+                            .categoryName(exp.getCategory().getCategoryName())
+                            .spendings(dateAndSpendings)
+                            .build();
+                }).toList();
+
+        return ResponseEntity.ok(dailySpendings);
     }
 }
