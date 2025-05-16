@@ -1,42 +1,50 @@
 package pl.ros1yn.personalbudgetapi.analytics.service;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import pl.ros1yn.personalbudgetapi.analytics.response.DailySpendingsResponse;
-import pl.ros1yn.personalbudgetapi.analytics.response.ExpensesOfTheMonth;
-import pl.ros1yn.personalbudgetapi.analytics.response.MaxAndMinSpendingInTheMonthResponse;
-import pl.ros1yn.personalbudgetapi.analytics.response.TotalMonthlySpending;
+import pl.ros1yn.personalbudgetapi.analytics.response.*;
 import pl.ros1yn.personalbudgetapi.analytics.utils.MinMaxInTheMonthHelper;
 import pl.ros1yn.personalbudgetapi.analytics.utils.MonthlyAveragePerCategoryHelper;
+import pl.ros1yn.personalbudgetapi.analytics.utils.SpendingTrendHelper;
 import pl.ros1yn.personalbudgetapi.expenses.model.Expenses;
 import pl.ros1yn.personalbudgetapi.expenses.repository.ExpensesRepository;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class AnalyticsService {
 
     private final ExpensesRepository expensesRepository;
     private MonthlyAveragePerCategoryHelper monthlyAveragePerCategoryHelper;
-
+    private SpendingTrendHelper spendingTrendHelper;
     private MinMaxInTheMonthHelper minMaxInTheMonthHelper;
 
     public ResponseEntity<Map<String, Map<String, String>>> getMonthlySpendingsAveragesPerCategory() {
 
-        List<Expenses> expenses = expensesRepository.findAll();
+        log.info("Fetching all expenses to calculate monthly averages per category");
 
-        Map<String, Map<YearMonth, List<Double>>> expansesPerCategory =
+        List<Expenses> expenses = expensesRepository.findAll();
+        log.info("Retrieved {} expenses from repository", expenses.size());
+
+        Map<String, Map<YearMonth, List<Double>>> expensesPerCategory =
                 monthlyAveragePerCategoryHelper.groupExpensesPerCategory(expenses);
+        log.info("Grouped expenses per category: {}", expensesPerCategory.keySet());
 
         Map<String, Map<String, String>> result =
-                monthlyAveragePerCategoryHelper.formatAndExportCategoryAverages(expansesPerCategory);
+                monthlyAveragePerCategoryHelper.formatAndExportCategoryAverages(expensesPerCategory);
+        log.info("Formatted and exported category averages");
 
         return ResponseEntity.ok(result);
     }
@@ -44,12 +52,17 @@ public class AnalyticsService {
 
     public ResponseEntity<MaxAndMinSpendingInTheMonthResponse> getMinSpendingInTheMonth(YearMonth dateOfSpending) {
 
+        log.info("Getting minimum spending for month: {}", dateOfSpending);
+
         double minSpendingAmount = minMaxInTheMonthHelper.getMinSpendingAmount(dateOfSpending);
+        log.info("Minimum spending amount for {} is {}", dateOfSpending, minSpendingAmount);
 
         MaxAndMinSpendingInTheMonthResponse result = MaxAndMinSpendingInTheMonthResponse.builder()
-                .spendingAmount("minSpendingAmount")
+                .spendingAmount(String.valueOf(minSpendingAmount))  // corrected to actual amount
                 .formattedAmount(String.format("%.2f", minSpendingAmount))
                 .build();
+
+        log.info("Built Min Spending response: {}", result);
 
         return ResponseEntity.ok(result);
     }
@@ -58,12 +71,17 @@ public class AnalyticsService {
 
     public ResponseEntity<MaxAndMinSpendingInTheMonthResponse> getMaxSpendingInTheMonth(YearMonth dateOfSpending) {
 
-        double minSpendingAmount = minMaxInTheMonthHelper.getMaxSpendingAmount(dateOfSpending);
+        log.info("Getting maximum spending for month: {}", dateOfSpending);
+
+        double maxSpendingAmount = minMaxInTheMonthHelper.getMaxSpendingAmount(dateOfSpending);
+        log.info("Maximum spending amount for {} is {}", dateOfSpending, maxSpendingAmount);
 
         MaxAndMinSpendingInTheMonthResponse result = MaxAndMinSpendingInTheMonthResponse.builder()
-                .spendingAmount("maxSpendingAmount")
-                .formattedAmount(String.format("%.2f", minSpendingAmount))
+                .spendingAmount(String.valueOf(maxSpendingAmount))  // corrected to actual amount
+                .formattedAmount(String.format("%.2f", maxSpendingAmount))
                 .build();
+
+        log.info("Built Max Spending response: {}", result);
 
         return ResponseEntity.ok(result);
     }
@@ -71,28 +89,36 @@ public class AnalyticsService {
 
     public ResponseEntity<ExpensesOfTheMonth> getMonthlySpendingsInCategory(String categoryName, YearMonth dateOfSpending) {
 
+        log.info("Fetching monthly spendings for category: {} and month: {}", categoryName, dateOfSpending);
+
         List<Expenses> expenses = expensesRepository.findAll().stream()
-                .filter(exp -> exp.getCategory()
-                        .getCategoryName().equalsIgnoreCase(categoryName))
+                .filter(exp -> exp.getCategory().getCategoryName().equalsIgnoreCase(categoryName))
                 .filter(exp -> dateOfSpending.equals(YearMonth.from(exp.getExpenseDate())))
                 .toList();
 
+        log.info("Filtered {} expenses for category '{}' in month {}", expenses.size(), categoryName, dateOfSpending);
+
         Map<String, List<Double>> filteredExpenses = expenses.stream()
                 .collect(Collectors.groupingBy(
-                                exp -> YearMonth.from(dateOfSpending).toString(),
-                                Collectors.mapping(Expenses::getAmount, Collectors.toList())
-                        )
-                );
+                        exp -> YearMonth.from(dateOfSpending).toString(),
+                        Collectors.mapping(Expenses::getAmount, Collectors.toList())
+                ));
+
+        log.info("Grouped expenses map: {}", filteredExpenses);
 
         ExpensesOfTheMonth result = ExpensesOfTheMonth.builder()
                 .category(categoryName)
                 .expenses(filteredExpenses)
                 .build();
 
+        log.info("Built ExpensesOfTheMonth response: {}", result);
+
         return ResponseEntity.ok(result);
     }
 
     public ResponseEntity<TotalMonthlySpending> getTotalMonthlySpending(YearMonth dateOfSpending) {
+
+        log.info("Calculating total monthly spending for: {}", dateOfSpending);
 
         double totalMonthlySpendings = expensesRepository.findAll().stream()
                 .filter(exp -> dateOfSpending.equals(YearMonth.from(exp.getExpenseDate())))
@@ -100,10 +126,14 @@ public class AnalyticsService {
                 .mapToDouble(Double::doubleValue)
                 .sum();
 
+        log.info("Total spending amount for {}: {}", dateOfSpending, totalMonthlySpendings);
+
         TotalMonthlySpending result = TotalMonthlySpending.builder()
                 .spendingsDate(dateOfSpending)
                 .totalSpendings(String.format("%.2f", totalMonthlySpendings))
                 .build();
+
+        log.info("Built TotalMonthlySpending response: {}", result);
 
         return ResponseEntity.ok(result);
     }
@@ -113,7 +143,6 @@ public class AnalyticsService {
         List<DailySpendingsResponse> dailySpendings = expensesRepository.findAll().stream()
                 .filter(exp -> exp.getExpenseDate().isEqual(spendingaDate))
                 .map(exp -> {
-
                     HashMap<String, String> dateAndSpendings = new HashMap<>();
 
                     dateAndSpendings.put(
@@ -127,6 +156,35 @@ public class AnalyticsService {
                             .build();
                 }).toList();
 
+        log.info("Found {} daily spending entries for date {}", dailySpendings.size(), spendingaDate);
+
         return ResponseEntity.ok(dailySpendings);
     }
+
+
+    public ResponseEntity<TrendResponse> getSpendingTrend(String categoryName, YearMonth dateFrom, YearMonth dateTo) {
+
+        log.info("Called getSpendingTrend for category: {}, date range: {} - {}", categoryName, dateFrom, dateTo);
+
+        Map<YearMonth, Double> spendingsDatesWithAmount = spendingTrendHelper.getSpendingsDatesWithAmounts(categoryName, dateFrom, dateTo);
+        log.info("Retrieved {} spending entries", spendingsDatesWithAmount.size());
+
+        ArrayList<Double> spendingsPerMonth = new ArrayList<>();
+        spendingsDatesWithAmount.forEach((date, amount) -> spendingsPerMonth.add(amount));
+        log.info("Collected spending amounts per month: {}", spendingsPerMonth);
+
+        SimpleRegression regression = new SimpleRegression();
+        IntStream.range(0, spendingsPerMonth.size())
+                .forEach(i -> regression.addData(i, spendingsPerMonth.get(i)));
+
+        double slope = regression.getSlope();
+        log.info("Calculated regression slope: {}", slope);
+
+        TrendResponse response = spendingTrendHelper.buildResponse(slope);
+        log.info("Built response: {}", response);
+
+        return ResponseEntity.ok(response);
+    }
+
+
 }

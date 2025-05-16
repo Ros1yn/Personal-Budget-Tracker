@@ -3,7 +3,6 @@ package pl.ros1yn.personalbudgetapi.analytics.response;
 import lombok.Builder;
 import lombok.Data;
 
-import java.util.List;
 import java.util.Map;
 
 @Data

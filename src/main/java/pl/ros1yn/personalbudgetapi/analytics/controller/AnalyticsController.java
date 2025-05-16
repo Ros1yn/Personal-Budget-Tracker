@@ -8,10 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import pl.ros1yn.personalbudgetapi.analytics.response.DailySpendingsResponse;
-import pl.ros1yn.personalbudgetapi.analytics.response.ExpensesOfTheMonth;
-import pl.ros1yn.personalbudgetapi.analytics.response.MaxAndMinSpendingInTheMonthResponse;
-import pl.ros1yn.personalbudgetapi.analytics.response.TotalMonthlySpending;
+import pl.ros1yn.personalbudgetapi.analytics.response.*;
 import pl.ros1yn.personalbudgetapi.analytics.service.AnalyticsService;
 
 import java.time.LocalDate;
@@ -67,8 +64,18 @@ class AnalyticsController {
 
     @GetMapping("/dailyspendings/{spendingaDate}")
     ResponseEntity<List<DailySpendingsResponse>> getDailySpendings(@PathVariable LocalDate spendingaDate){
+
         log.info("Recived request for getDailySpendings with date: {}.", spendingaDate);
         return analyticsService.getDailySpendings(spendingaDate);
+    }
+
+    @GetMapping("/trend/{categoryName}/{dateFrom}/{dateTo}")
+    ResponseEntity<TrendResponse> getSpendingTrend(@PathVariable String categoryName,
+                                                   @PathVariable @DateTimeFormat(pattern = "yyyy-MM") YearMonth dateFrom,
+                                                   @PathVariable @DateTimeFormat(pattern = "yyyy-MM") YearMonth dateTo) {
+
+        log.info("Recived request for getSpendingTrend with category name: {}.", categoryName);
+        return analyticsService.getSpendingTrend(categoryName, dateFrom, dateTo);
     }
 
 }
