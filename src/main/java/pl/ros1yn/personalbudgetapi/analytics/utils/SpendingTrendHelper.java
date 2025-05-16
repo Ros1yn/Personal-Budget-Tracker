@@ -36,11 +36,12 @@ public class SpendingTrendHelper {
         return trend;
     }
 
+    //TODO single month predicate
     public Map<YearMonth, Double> getSpendingsDatesWithAmounts(String categoryName, YearMonth dateFrom, YearMonth dateTo) {
         return expensesRepository.findAll().stream()
                 .filter(exp -> YearMonth.from(exp.getExpenseDate()).plusMonths(1).isAfter(dateFrom))
                 .filter(exp -> YearMonth.from(exp.getExpenseDate()).minusMonths(1).isBefore(dateTo))
-                .filter(exp -> exp.getCategory().getCategoryName().equals(categoryName))
+                .filter(exp -> exp.getCategory().getCategoryName().equalsIgnoreCase(categoryName))
                 .sorted(Comparator.comparing(Expenses::getExpenseDate))
                 .collect(Collectors.groupingBy(exp ->
                                 YearMonth.from(exp.getExpenseDate()),

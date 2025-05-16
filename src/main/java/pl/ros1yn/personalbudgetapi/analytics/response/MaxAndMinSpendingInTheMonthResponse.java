@@ -8,5 +8,4 @@ import lombok.Data;
 public class MaxAndMinSpendingInTheMonthResponse {
 
     private String spendingAmount;
-    private String formattedAmount;
 }

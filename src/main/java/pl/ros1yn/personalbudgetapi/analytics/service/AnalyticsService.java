@@ -58,15 +58,13 @@ public class AnalyticsService {
         log.info("Minimum spending amount for {} is {}", dateOfSpending, minSpendingAmount);
 
         MaxAndMinSpendingInTheMonthResponse result = MaxAndMinSpendingInTheMonthResponse.builder()
-                .spendingAmount(String.valueOf(minSpendingAmount))  // corrected to actual amount
-                .formattedAmount(String.format("%.2f", minSpendingAmount))
+                .spendingAmount(String.format("%.2f", minSpendingAmount))
                 .build();
 
         log.info("Built Min Spending response: {}", result);
 
         return ResponseEntity.ok(result);
     }
-
 
 
     public ResponseEntity<MaxAndMinSpendingInTheMonthResponse> getMaxSpendingInTheMonth(YearMonth dateOfSpending) {
@@ -77,8 +75,7 @@ public class AnalyticsService {
         log.info("Maximum spending amount for {} is {}", dateOfSpending, maxSpendingAmount);
 
         MaxAndMinSpendingInTheMonthResponse result = MaxAndMinSpendingInTheMonthResponse.builder()
-                .spendingAmount(String.valueOf(maxSpendingAmount))  // corrected to actual amount
-                .formattedAmount(String.format("%.2f", maxSpendingAmount))
+                .spendingAmount(String.format("%.2f", maxSpendingAmount))
                 .build();
 
         log.info("Built Max Spending response: {}", result);
