@@ -4,12 +4,10 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import pl.ros1yn.personalbudgetapi.analytics.response.*;
 import pl.ros1yn.personalbudgetapi.analytics.service.AnalyticsService;
+import pl.ros1yn.personalbudgetapi.analytics.dto.TrendRequest;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -24,7 +22,7 @@ class AnalyticsController {
 
     private final AnalyticsService analyticsService;
 
-    @GetMapping("/average")
+    @GetMapping("/average/")
      ResponseEntity<Map<String, Map<String, String>>> getMonthlySpendingsAverages() {
 
         log.info("Recived request for getMonthlySpendingsAverages.");
@@ -69,13 +67,11 @@ class AnalyticsController {
         return analyticsService.getDailySpendings(spendingaDate);
     }
 
-    @GetMapping("/trend/{categoryName}/{dateFrom}/{dateTo}")
-    ResponseEntity<TrendResponse> getSpendingTrend(@PathVariable String categoryName,
-                                                   @PathVariable @DateTimeFormat(pattern = "yyyy-MM") YearMonth dateFrom,
-                                                   @PathVariable @DateTimeFormat(pattern = "yyyy-MM") YearMonth dateTo) {
+    @GetMapping("/spendingTrend/")
+    ResponseEntity<TrendResponse> getSpendingTrend(@RequestBody TrendRequest requestParams) {
 
-        log.info("Recived request for getSpendingTrend with category name: {}.", categoryName);
-        return analyticsService.getSpendingTrend(categoryName, dateFrom, dateTo);
+        log.info("Recived request for getSpendingTrend with body: {}, {}, {}.", requestParams.getCategoryName(), requestParams.getDateFrom(), requestParams.getDateTo());
+        return analyticsService.getSpendingTrend(requestParams);
     }
 
 }

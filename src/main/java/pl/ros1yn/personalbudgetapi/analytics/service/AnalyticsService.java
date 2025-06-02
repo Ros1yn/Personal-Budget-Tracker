@@ -9,6 +9,7 @@ import pl.ros1yn.personalbudgetapi.analytics.response.*;
 import pl.ros1yn.personalbudgetapi.analytics.utils.MinMaxInTheMonthHelper;
 import pl.ros1yn.personalbudgetapi.analytics.utils.MonthlyAveragePerCategoryHelper;
 import pl.ros1yn.personalbudgetapi.analytics.utils.SpendingTrendHelper;
+import pl.ros1yn.personalbudgetapi.analytics.dto.TrendRequest;
 import pl.ros1yn.personalbudgetapi.expenses.model.Expenses;
 import pl.ros1yn.personalbudgetapi.expenses.repository.ExpensesRepository;
 
@@ -159,29 +160,35 @@ public class AnalyticsService {
     }
 
 
-    public ResponseEntity<TrendResponse> getSpendingTrend(String categoryName, YearMonth dateFrom, YearMonth dateTo) {
+    public ResponseEntity<TrendResponse> getSpendingTrend(TrendRequest requestedParams) {
 
-        log.info("Called getSpendingTrend for category: {}, date range: {} - {}", categoryName, dateFrom, dateTo);
+        log.info("Called getSpendingTrend for category: {}, date range: {} - {}",
+                requestedParams.getCategoryName(),
+                requestedParams.getDateFrom(),
+                requestedParams.getDateTo()
+        );
 
-        Map<YearMonth, Double> spendingsDatesWithAmount = spendingTrendHelper.getSpendingsDatesWithAmounts(categoryName, dateFrom, dateTo);
+        Map<YearMonth, Double> spendingsDatesWithAmount = spendingTrendHelper.getSpendingsDatesWithAmounts(requestedParams);
         log.info("Retrieved {} spending entries", spendingsDatesWithAmount.size());
 
-        ArrayList<Double> spendingsPerMonth = new ArrayList<>();
-        spendingsDatesWithAmount.forEach((date, amount) -> spendingsPerMonth.add(amount));
-        log.info("Collected spending amounts per month: {}", spendingsPerMonth);
+        List<Double> spendingsPerMonth = spendingTrendHelper.getSpendingsPerMonth(spendingsDatesWithAmount);
 
-        SimpleRegression regression = new SimpleRegression();
-        IntStream.range(0, spendingsPerMonth.size())
-                .forEach(i -> regression.addData(i, spendingsPerMonth.get(i)));
+        SimpleRegression regression = spendingTrendHelper.buildRegression(spendingsPerMonth);
 
         double slope = regression.getSlope();
         log.info("Calculated regression slope: {}", slope);
 
         TrendResponse response = spendingTrendHelper.buildResponse(slope);
+
+        if (response.getChangeRate().equalsIgnoreCase("NaN")){
+            response.setChangeRate("0.0");
+        }
         log.info("Built response: {}", response);
 
         return ResponseEntity.ok(response);
     }
+
+
 
 
 }
