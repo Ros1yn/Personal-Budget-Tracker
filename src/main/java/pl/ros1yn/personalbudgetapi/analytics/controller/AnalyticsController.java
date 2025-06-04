@@ -22,7 +22,7 @@ class AnalyticsController {
 
     private final AnalyticsService analyticsService;
 
-    @GetMapping("/average/")
+    @GetMapping("/average")
      ResponseEntity<Map<String, Map<String, String>>> getMonthlySpendingsAverages() {
 
         log.info("Recived request for getMonthlySpendingsAverages.");
@@ -67,7 +67,7 @@ class AnalyticsController {
         return analyticsService.getDailySpendings(spendingaDate);
     }
 
-    @GetMapping("/spendingTrend/")
+    @GetMapping("/spendingTrend")
     ResponseEntity<TrendResponse> getSpendingTrend(@RequestBody TrendRequest requestParams) {
 
         log.info("Recived request for getSpendingTrend with body: {}, {}, {}.", requestParams.getCategoryName(), requestParams.getDateFrom(), requestParams.getDateTo());
