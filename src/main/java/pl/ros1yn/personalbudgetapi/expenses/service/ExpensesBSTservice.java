@@ -18,13 +18,10 @@ public class ExpensesBSTservice {
     private final ExpensesRepository expensesRepository;
     private final ExpenseBST bst = new ExpenseBST();
 
-
     @PostConstruct
     public void initBST() {
         List<Expenses> allExpenses = expensesRepository.findAll();
-        for (Expenses e : allExpenses) {
-            bst.insert(e);
-        }
+        allExpenses.forEach(bst::insert);
     }
 
 
