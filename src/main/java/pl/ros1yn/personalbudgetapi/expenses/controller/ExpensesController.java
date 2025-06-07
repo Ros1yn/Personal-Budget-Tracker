@@ -49,4 +49,6 @@ class ExpensesController {
         log.info("Recived expensesRequest for patchExpenses with id and body:: {} | {}", expensesId, expensesRequest);
         return expensesPatchService.patchExpenses(expensesId, expensesRequest);
     }
+
+
 }
